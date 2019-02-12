@@ -1,0 +1,12 @@
+{
+    "name": "php-ml-test/observation-classifier",
+    "description": "Testing PHP ML for classifying observations",
+    "type": "project",
+    "authors": [{
+            "name": "Sardez, Angelito Jr."
+        }
+    ],
+    "require": {
+        "php-ai/php-ml": "^0.7.0"
+    }
+}
