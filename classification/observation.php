@@ -1,6 +1,7 @@
 <?php
 namespace ChildDevelopmentPortfolio\Classification;
 
+use ChildDevelopmentPortfolio\Utilities\WordUtilities;
 use Phpml\Dataset\CsvDataset;
 use Phpml\Dataset\ArrayDataset;
 use Phpml\FeatureExtraction\TokenCountVectorizer;
@@ -11,20 +12,22 @@ use Phpml\Metric\Accuracy;
 use Phpml\Classification\NaiveBayes;
 use Phpml\SupportVectorMachine\Kernel;
 
-class ObservationClassifier {
-    protected $datasetFilename;
+require __DIR__ . '../../utilities/wordutilities.php';
 
-    public function __construct($datasetFilename)
+class ObservationClassifier {
+    protected $wordUtilities;
+
+    public function __construct()
     {
-        $this->datasetFilename = $datasetFilename;
+        $this->wordUtilities = new WordUtilities();
     }
 
     public function Classify($observation) {
-        $dataset = new CsvDataset($this->datasetFilename, 1);
+        $dataset = new CsvDataset(__DIR__ . '../../datasets/observations.csv', 1);
         
         $samples = [];
         foreach ($dataset->getSamples() as $sample) {
-            $samples[] = $sample[0];
+            $samples[] = $this->wordUtilities->CleanupWords($sample[0]);
         }
         
         $vectorizer = new TokenCountVectorizer(new WordTokenizer());
@@ -40,6 +43,7 @@ class ObservationClassifier {
         $classifier = new NaiveBayes();
         $classifier->train($samples, $dataset->getTargets());
         
+        $observation = $this->wordUtilities->CleanupWords($observation);
         $testData = explode (' ', $observation);
         $vectorizer->fit($testData);
         $vectorizer->transform($testData);
@@ -63,11 +67,15 @@ class ObservationClassifier {
     }
 
     function GetRecommendedObservation($outcomesCounts) {
-        $maxTokens = array_keys($outcomesCounts, max($outcomesCounts));
-        if ($maxTokens[0] === '0' && count($outcomesCounts) === 1)
-            return "None";
-        
-        $mostMatched = $maxTokens[0] === '0' ? $maxTokens[1] : $maxTokens[0];
+        $mostMatched = '0';
+        $lastMax = 0;
+        foreach ($outcomesCounts as $key => $value) {
+            if ($key != '0' && $value > $lastMax) {
+                $mostMatched = $key;
+                $lastMax = $value;
+            }
+        }
+
         switch ($mostMatched) {
             case '1':
                 return 'Children have a strong sense of identity';
@@ -80,6 +88,7 @@ class ObservationClassifier {
             case '5':
                 return 'Children are effective communicators';
         }
+        return "None";
     }
 
     function GetObservationCount($observationNumber, $outcomesCounts) {

@@ -7,6 +7,7 @@
         }
     ],
     "require": {
-        "php-ai/php-ml": "^0.7.0"
+        "php-ai/php-ml": "^0.7.0",
+        "voku/stop-words": "^2.0"
     }
 }
